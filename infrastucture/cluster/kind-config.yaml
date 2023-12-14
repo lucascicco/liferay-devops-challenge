@@ -1,0 +1,61 @@
+---
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: liferay-cluster
+
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "master=true"
+  - role: worker
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "memory=450Mi,cpu=500m"
+            node-labels: "pool=vendors,role=vendors-worker-1,zone=zone-1,ingress-ready=true"
+  - role: worker
+    extraMounts:
+      - containerPath: /var/lib/kubelet/config.json
+        hostPath: $DOCKER_CONFIG_PATH
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "memory=300Mi,cpu=300m"
+            node-labels: "pool=worker,role=worker-1,zone=zone-1"
+  - role: worker
+    extraMounts:
+      - containerPath: /var/lib/kubelet/config.json
+        hostPath: $DOCKER_CONFIG_PATH
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "memory=300Mi,cpu=300m"
+            node-labels: "pool=worker,role=worker-2,zone=zone-2"
+  - role: worker
+    extraMounts:
+      - containerPath: /var/lib/kubelet/config.json
+        hostPath: $DOCKER_CONFIG_PATH
+    kubeadmConfigPatches:
+      - |-
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "memory=300Mi,cpu=300m"
+            node-labels: "pool=worker,role=worker-3,zone=zone-3"

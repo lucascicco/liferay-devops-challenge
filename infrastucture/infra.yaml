@@ -1,0 +1,14 @@
+---
+vendors:
+  scripts:
+    - Nginx
+  charts:
+    - name: MySQL
+      chart: bitnami/mysql
+      namespace: mysql
+      releaseName: mysql
+      envs:
+        - ROOT_PASSWORD
+        - APP_DB_NAME
+        - APP_DB_USER
+        - APP_DB_PASS

@@ -1,0 +1,9 @@
+---
+chart: nodejs
+
+environmentVars:
+  - APP_DB_USER
+  - APP_DB_PASS
+  - APP_DB_NAME
+
+latestReleaseVersion: 0.0.1

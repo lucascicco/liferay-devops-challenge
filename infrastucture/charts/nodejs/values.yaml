@@ -1,0 +1,45 @@
+---
+nodejs:
+  replicas: 3
+  # NOTE: The application image, it'll be set by the pipeline.
+  image:
+    repo: testing
+    tag: 1.0.0
+  containerPort: 3000
+  startupScript: ''
+  readinessProbe:
+    path: /posts
+    periodSeconds: 15
+    failureThreshold: 2
+  livenessProbe:
+    path: /posts
+    periodSeconds: 30
+    failureThreshold: 1
+  # NOTE: The application has one minute to start.
+  startupProbe:
+    path: /posts
+    failureThreshold: 6
+    periodSeconds: 10
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 100m
+      memory: 100Mi
+  service:
+    type: ClusterIP
+    protocol: TCP
+    port: 3000
+    targetPort: 3000
+  nodeSelector:
+    pool: workers
+
+### Environment variables
+config: {}
+secrets: {}
+ormconfig: ''
+
+# Add extraEnvFrom and extraEnv sections for customization
+extraEnvFrom: []
+extraEnv: []

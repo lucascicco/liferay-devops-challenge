@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nodejs.fullname" . }}
+  namespace: {{ include "nodejs.namespace" . }}
+  labels:
+    {{- include "nodejs.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.nodejs.replicas }}
+  selector:
+    matchLabels:
+      {{- include "nodejs.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nodejs.selectorLabels" . | nindent 8 }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - {{ include "nodejs.name" . }}
+            topologyKey: zone
+      {{- with .Values.nodejs.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: nodejs
+          image: {{ .Values.nodejs.image.repo }}:{{ .Values.nodejs.image.tag }}
+          # command: ["/bin/sh", "-c", "sleep infinity"]
+          ports:
+            - containerPort: {{ .Values.nodejs.containerPort }}
+              name: nodejs
+          envFrom:
+            - secretRef:
+                name: {{ include "nodejs.fullname" . }}-secret
+            - configMapRef:
+                name: {{ include "nodejs.fullname" . }}-config
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.nodejs.readinessProbe.path }}
+              port: nodejs
+            failureThreshold: {{ .Values.nodejs.readinessProbe.failureThreshold }}
+            periodSeconds: {{ .Values.nodejs.readinessProbe.periodSeconds }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.nodejs.livenessProbe.path }}
+              port: nodejs
+            failureThreshold: {{ .Values.nodejs.livenessProbe.failureThreshold }}
+            periodSeconds: {{ .Values.nodejs.livenessProbe.periodSeconds }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.nodejs.startupProbe.path }}
+              port: nodejs
+            failureThreshold: {{ .Values.nodejs.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.nodejs.startupProbe.periodSeconds }}
+          {{- with .Values.nodejs.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: orm-config-volume
+              mountPath: /app/ormconfig.env
+              subPath: ormconfig.env
+      volumes:
+        - name: orm-config-volume
+          secret:
+            secretName: {{ include "nodejs.fullname" . }}-orm-config

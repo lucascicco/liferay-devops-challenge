@@ -1,0 +1,36 @@
+---
+image:
+  registry: docker.io
+  repository: bitnami/mysql
+  tag: 8.0.35-debian-11-r0
+
+architecture: standalone
+
+auth:
+  createDatabase: false
+  rootPassword: <ROOT_PASSWORD>
+
+resources:
+  limits:
+    memory: 140Mi
+    cpu: 150m
+  requests:
+    memory: 100Mi
+    cpu: 100m
+
+# Create a user and a database, and grant privileges to the user to the database
+startdbScripts:
+  my_start_script.sh: |
+    #!/bin/bash
+    mysql -u root -p<ROOT_PASSWORD> << EOF
+     CREATE DATABASE IF NOT EXISTS <APP_DB_NAME>;
+     CREATE USER '<APP_DB_USER>'@'%' IDENTIFIED BY '<APP_DB_PASS>';
+     GRANT ALL PRIVILEGES ON <APP_DB_NAME>.* TO '<APP_DB_USER>'@'%';
+    EOF
+
+persistence:
+  enabled: true
+  size: 1Gi
+
+nodeSelector:
+  pool: vendors

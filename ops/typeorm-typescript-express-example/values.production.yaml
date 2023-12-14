@@ -1,0 +1,54 @@
+---
+nodejs:
+  replicas: 3
+  # NOTE: The application image, it'll be set by the pipeline.
+  image:
+    repo: lucasciccox1/typeorm-typescript-express-example
+    tag: <IMAGE_TAG>
+  containerPort: 3000
+  startupScript: node /app/dist/index.js
+  readinessProbe:
+    path: /posts
+    periodSeconds: 15
+    failureThreshold: 2
+  livenessProbe:
+    path: /posts
+    periodSeconds: 30
+    failureThreshold: 1
+  # NOTE: The application has one minute to start.
+  startupProbe:
+    path: /posts
+    failureThreshold: 6
+    periodSeconds: 10
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 150m
+      memory: 200Mi
+  service:
+    type: ClusterIP
+    protocol: TCP
+    port: 3000
+    targetPort: 3000
+  nodeSelector:
+    pool: worker
+
+### Environment variables
+config: {}
+secrets: {}
+ormconfig: |-
+  TYPEORM_CONNECTION = mysql
+  TYPEORM_HOST = mysql.mysql.svc
+  TYPEORM_PORT = 3306
+  TYPEORM_USERNAME = <APP_DB_USER>
+  TYPEORM_PASSWORD = <APP_DB_PASS>
+  TYPEORM_DATABASE = <APP_DB_NAME>
+  TYPEORM_SYNCHRONIZE = true
+  TYPEORM_ENTITIES = dist/entity/*.js
+  TYPEORM_SUBSCRIBERS = dist/subscriber/*.js
+  TYPEORM_MIGRATIONS = dist/migration/*.js
+  TYPEORM_ENTITIES_DIR = dist/entity
+  TYPEORM_MIGRATIONS_DIR = dist/migration
+  TYPEORM_SUBSCRIBERS_DIR = dist/subscriber

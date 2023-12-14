@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "nodejs.fullname" . }}-migration-job
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nodejs.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+spec:
+  template:
+    metadata:
+      name: {{ include "nodejs.fullname" . }}-migration-job
+    spec:
+      {{- with .Values.nodejs.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: migration-container
+        image: {{ .Values.nodejs.image.repo }}:{{ .Values.nodejs.image.tag }}
+        command: ["/bin/sh", "-c", "node ./node_modules/typeorm/cli.js migration:run"]
+        ports:
+        - containerPort: {{ .Values.nodejs.containerPort }}
+          name: nodejs
+        envFrom:
+          - secretRef:
+              name: {{ include "nodejs.fullname" . }}-secret
+          - configMapRef:
+              name: {{ include "nodejs.fullname" . }}-config
+        {{- with .Values.extraEnvFrom }}
+        envFrom:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.extraEnv }}
+        env:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.nodejs.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        volumeMounts:
+          - name: orm-config-volume
+            mountPath: /app/ormconfig.env
+            subPath: ormconfig.env
+      restartPolicy: Never
+      volumes:
+      - name: orm-config-volume
+        secret:
+          secretName: {{ include "nodejs.fullname" . }}-orm-config
+  backoffLimit: 4

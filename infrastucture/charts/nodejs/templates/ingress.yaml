@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "nodejs.fullname" . }}-ingress
+  namespace: {{ include "nodejs.namespace" . }}
+  labels:
+    {{- include "nodejs.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /backend(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ include "nodejs.fullname" . }}
+            port:
+              number: {{ .Values.nodejs.containerPort }}

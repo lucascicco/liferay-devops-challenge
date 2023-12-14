@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: nodejs
+version: 1.0.0
+appVersion: 1.0.0
+description: Nodejs on GKE with HTTPS Load Balancer
+type: application
